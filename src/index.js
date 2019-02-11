@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
-import { createStore, combineReducers } from 'redux';
-
+import { createStore, combineReducers, applyMiddleware, compose } from 'redux';
+import thunk from 'redux-thunk';
 import counterReducer from './store/reducers/counter';
 import resultReducer from './store/reducers/result';
 import './index.css';
@@ -11,10 +11,23 @@ import registerServiceWorker from './registerServiceWorker';
 
 const rootReducer = combineReducers({
     ctr: counterReducer,
-    res: resultReducer
+    res: resultReducer,
 });
 
-const store = createStore(rootReducer);
+const logger = store => {
+	return next => {
+		return action => {
+			console.log("Dispath middleware");
+			const result = next(action);
+			console.log("State is: ", store.getState());
+			return result;
+		};
+	};
+};
+
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const store = createStore(rootReducer, /* preloadedState, */ composeEnhancers(
+	applyMiddleware(logger, thunk)));
 
 ReactDOM.render(<Provider store={store}><App /></Provider>, document.getElementById('root'));
 registerServiceWorker();
